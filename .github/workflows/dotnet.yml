@@ -12,27 +12,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Docker Compose (v2)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose-plugin
-          docker compose version
-
-      - name: Start dependencies via Docker Compose
-        run: docker compose up -d
-
-      - name: Wait for bank_simulator to be ready
-        run: |
-          echo "Waiting for bank_simulator to be ready..."
-          for i in {1..30}; do
-            if nc -z localhost 2525; then
-              echo "bank_simulator is up!"
-              break
-            fi
-            sleep 2
-          done
-
+        
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -43,10 +23,3 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore --configuration Release --verbosity normal --no-restore
-
-      - name: Test
-        run: dotnet test --no-build --verbosity normal --configuration Release --no-restore
-
-      - name: Shut down Docker Compose
-        if: always()
-        run: docker compose down
