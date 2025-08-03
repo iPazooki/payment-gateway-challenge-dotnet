@@ -68,7 +68,7 @@ public class PaymentServiceTests
         var idempotencyKey = "test-key";
         var cancellationToken = CancellationToken.None;
 
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(true);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(false);
 
         // Act
         var (response, errors) = await _paymentService.ProcessPaymentAsync(request, idempotencyKey, cancellationToken);
@@ -93,7 +93,7 @@ public class PaymentServiceTests
         };
         var validationResult = new ValidationResult(validationErrors);
 
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _validator.ValidateAsync(request, cancellationToken).Returns(validationResult);
 
         // Act
@@ -116,7 +116,7 @@ public class PaymentServiceTests
         var bankResponse = new BankPaymentResponse { Authorized = true };
 
         SetupSuccessfulValidation(request, cancellationToken);
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _bankService.ProcessPaymentAsync(Arg.Any<BankPaymentRequest>(), cancellationToken).Returns(bankResponse);
 
         // Act
@@ -145,7 +145,7 @@ public class PaymentServiceTests
         var bankResponse = new BankPaymentResponse { Authorized = false };
 
         SetupSuccessfulValidation(request, cancellationToken);
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _bankService.ProcessPaymentAsync(Arg.Any<BankPaymentRequest>(), cancellationToken).Returns(bankResponse);
 
         // Act
@@ -167,7 +167,7 @@ public class PaymentServiceTests
         var exception = new Exception("Bank service unavailable");
 
         SetupSuccessfulValidation(request, cancellationToken);
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _bankService.ProcessPaymentAsync(Arg.Any<BankPaymentRequest>(), cancellationToken).ThrowsAsync(exception);
 
         // Act
@@ -194,7 +194,7 @@ public class PaymentServiceTests
         var idempotencyKey = "test-key";
         var cancellationToken = CancellationToken.None;
 
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
 
         var validationErrors = new List<ValidationFailure> { new("CardNumber", "Invalid card number") };
         var validationResult = new ValidationResult(validationErrors);
@@ -214,13 +214,15 @@ public class PaymentServiceTests
         // Arrange
         var paymentId = Guid.NewGuid();
         var cancellationToken = CancellationToken.None;
+        int month = DateTime.UtcNow.AddMonths(1).Month;
+        int year = DateTime.UtcNow.Year;
         var existingPayment = new PostPaymentResponse
         {
             Id = paymentId,
             Status = PaymentStatus.Authorized,
             CardNumberLastFour = 1234,
-            ExpiryMonth = 12,
-            ExpiryYear = 2025,
+            ExpiryMonth = month,
+            ExpiryYear = year,
             Currency = "USD",
             Amount = 100
         };
@@ -235,8 +237,8 @@ public class PaymentServiceTests
         Assert.Equal(paymentId, result.Id);
         Assert.Equal(PaymentStatus.Authorized, result.Status);
         Assert.Equal(1234, result.CardNumberLastFour);
-        Assert.Equal(12, result.ExpiryMonth);
-        Assert.Equal(2025, result.ExpiryYear);
+        Assert.Equal(month, result.ExpiryMonth);
+        Assert.Equal(year, result.ExpiryYear);
         Assert.Equal("USD", result.Currency);
         Assert.Equal(100, result.Amount);
     }
@@ -269,7 +271,7 @@ public class PaymentServiceTests
         var idempotencyKey = "test-key";
         var cancellationToken = CancellationToken.None;
 
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
 
         var validationErrors = new List<ValidationFailure> { new("CardNumber", "Card number is required") };
         var validationResult = new ValidationResult(validationErrors);
@@ -293,7 +295,7 @@ public class PaymentServiceTests
         var bankResponse = new BankPaymentResponse { Authorized = true };
 
         SetupSuccessfulValidation(request, cancellationToken);
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _bankService.ProcessPaymentAsync(Arg.Any<BankPaymentRequest>(), cancellationToken).Returns(bankResponse);
 
         // Act
@@ -320,7 +322,7 @@ public class PaymentServiceTests
         var exception = new InvalidOperationException("Specific bank error");
 
         SetupSuccessfulValidation(request, cancellationToken);
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _bankService.ProcessPaymentAsync(Arg.Any<BankPaymentRequest>(), cancellationToken).ThrowsAsync(exception);
 
         // Act
@@ -346,7 +348,7 @@ public class PaymentServiceTests
         var bankResponse = new BankPaymentResponse { Authorized = true };
 
         SetupSuccessfulValidation(request, cancellationToken);
-        _paymentsRepository.GetByIdempotencyKey(idempotencyKey).Returns(false);
+        _paymentsRepository.IsItValidIdempotencyKey(idempotencyKey).Returns(true);
         _bankService.ProcessPaymentAsync(Arg.Any<BankPaymentRequest>(), cancellationToken).Returns(bankResponse);
 
         // Act
@@ -362,8 +364,8 @@ public class PaymentServiceTests
         return new PostPaymentRequest
         {
             CardNumber = "4111111111111234",
-            ExpiryMonth = 12,
-            ExpiryYear = 2025,
+            ExpiryMonth = DateTime.UtcNow.AddMonths(1).Month,
+            ExpiryYear = DateTime.UtcNow.Year,
             Currency = "USD",
             Amount = 100,
             Cvv = "123"

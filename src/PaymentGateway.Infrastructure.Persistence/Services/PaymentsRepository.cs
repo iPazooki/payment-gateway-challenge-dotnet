@@ -18,8 +18,8 @@ internal class PaymentsRepository: IPaymentsRepository
         return _payments.FirstOrDefault(p => p.Id == id);
     }
 
-    public bool GetByIdempotencyKey(string idempotencyKey)
+    public bool IsItValidIdempotencyKey(string idempotencyKey)
     {
-        return _idempotencyKeys.Contains(idempotencyKey, StringComparer.InvariantCultureIgnoreCase);;
+        return !_idempotencyKeys.Contains(idempotencyKey, StringComparer.InvariantCultureIgnoreCase);
     }
 }

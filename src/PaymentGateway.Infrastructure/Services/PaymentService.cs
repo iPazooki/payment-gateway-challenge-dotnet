@@ -17,9 +17,9 @@ internal class PaymentService(
             return (rejectedPayment, ["Idempotency-Key header is required for payment requests"]);
         }
         
-        var existingPayment = paymentsRepository.GetByIdempotencyKey(idempotencyKey);
+        var validIdempotencyKey = paymentsRepository.IsItValidIdempotencyKey(idempotencyKey);
         
-        if (existingPayment)
+        if (!validIdempotencyKey)
         {
             return (rejectedPayment, ["Idempotency-Key header already used for a previous payment"]);
         }

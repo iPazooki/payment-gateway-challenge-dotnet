@@ -3,8 +3,8 @@ using System.Text;
 using System.Text.Json;
 
 using Polly;
-using Polly.Fallback;
 using Polly.Retry;
+using Polly.Fallback;
 
 namespace PaymentGateway.Infrastructure.Services;
 
@@ -12,8 +12,7 @@ internal class BankService(IHttpClientFactory httpClientFactory, ILogger<BankSer
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("BankApi");
 
-    public async Task<BankPaymentResponse> ProcessPaymentAsync(BankPaymentRequest request,
-        CancellationToken cancellationToken)
+    public async Task<BankPaymentResponse> ProcessPaymentAsync(BankPaymentRequest request, CancellationToken cancellationToken)
     {
         try
         {
