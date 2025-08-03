@@ -22,8 +22,8 @@ public class PaymentsControllerTests : BaseIntegrationTest
         var request = new PostPaymentRequest
         {
             CardNumber = "2222405343248877",
-            ExpiryMonth = 9,
-            ExpiryYear = 2025,
+            ExpiryMonth = DateTime.UtcNow.AddMonths(1).Month,
+            ExpiryYear = DateTime.UtcNow.Year,
             Currency = "GBP",
             Amount = 100,
             Cvv = "123"
@@ -55,8 +55,8 @@ public class PaymentsControllerTests : BaseIntegrationTest
         var request = new PostPaymentRequest
         {
             CardNumber = "2222405343248878",
-            ExpiryMonth = 9,
-            ExpiryYear = 2025,
+            ExpiryMonth = DateTime.UtcNow.AddMonths(1).Month,
+            ExpiryYear = DateTime.UtcNow.Year,
             Currency = "GBP",
             Amount = 100,
             Cvv = "123"
@@ -88,8 +88,8 @@ public class PaymentsControllerTests : BaseIntegrationTest
         var request = new PostPaymentRequest
         {
             CardNumber = "2222405343248877",
-            ExpiryMonth = 9,
-            ExpiryYear = 2025,
+            ExpiryMonth = DateTime.UtcNow.AddMonths(1).Month,
+            ExpiryYear = DateTime.UtcNow.Year,
             Currency = "GBP",
             Amount = 100,
             Cvv = "123"
@@ -109,8 +109,8 @@ public class PaymentsControllerTests : BaseIntegrationTest
         var request = new PostPaymentRequest
         {
             CardNumber = "2222405343248877",
-            ExpiryMonth = 1,
-            ExpiryYear = 2020, // Expired year
+            ExpiryMonth = DateTime.UtcNow.AddMonths(-1).Month,
+            ExpiryYear = DateTime.UtcNow.Year,
             Currency = "GBP",
             Amount = 100,
             Cvv = "123"
@@ -135,8 +135,8 @@ public class PaymentsControllerTests : BaseIntegrationTest
         var request = new PostPaymentRequest
         {
             CardNumber = "2222405343248877",
-            ExpiryMonth = 9,
-            ExpiryYear = 2025,
+            ExpiryMonth = DateTime.UtcNow.AddMonths(-1).Month,
+            ExpiryYear = DateTime.UtcNow.Year,
             Currency = "GBP",
             Amount = 0, // Invalid amount
             Cvv = "123"
@@ -239,6 +239,12 @@ public class PaymentsControllerTests : BaseIntegrationTest
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(content, _jsonOptions);
+        
+        Assert.NotNull(paymentResponse);
+        Assert.True(paymentResponse.Status == PaymentStatus.Authorized);
     }
 
     #endregion
